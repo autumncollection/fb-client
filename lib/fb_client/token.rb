@@ -1,34 +1,39 @@
 # encoding:utf-8
+require 'fb_client/request'
 
 class FbClient
 
   module Token
 
+    TOKEN_TYPES = {
+      :default       => 'default',
+      :preferred     => 'preferred',
+      :high_priority => 'high_priority',
+      :old_api       => 'old_api',
+    }
+
     def self.get_token(type = :default)
-      ini_token
-      tail     = type == :default ? "?preferred=#{type.to_s}" : ""
-      response = request "#{$FB_TOKENS[:url]}/get#{tail}"
+      response = request "#{$FB_TOKENS[:url]}/get" +
+        "?type=#{TOKEN_TYPES[type] || TOKEN_TYPES[:default]}"
       return nil if !response ||
-        (response.kind_of?(Hash) && !response.include?(:error))
-      response['token']
+        (response.kind_of?(Hash) && response.include?(:error))
+      response['token'] || response['error']
     end
 
     # report non-working token
     def self.report_token token
-      ini_token
-      request @@ua_token, "#{$FB_TOKENS[:url]}/check?access_token=#{token}"
+      request "#{$FB_TOKENS[:url]}/check?access_token=#{token}"
     end
 
     # report non-working token and obtain a new one using get_token
-    def self.report_and_get_new_token token
+    def self.report_and_get_new_token token, type = :default
       report_token token
-      get_token
+      get_token type
     end
 
     def self.free_token?(type = :default)
-      ini_token
       begin
-        response = request @@ua_token, "#{$FB_TOKENS[:url]}/stats"
+        response = request "#{$FB_TOKENS[:url]}/stats"
         return false unless response
         return false if response['working'].to_i <= 0
         return false if type == :default && response['preferred'].to_i > 0
@@ -37,6 +42,10 @@ class FbClient
         return false
       end
     end
+
+    private
+
+    include Request
 
     # initialize curburger client only once
     def self.ini_token
@@ -47,9 +56,9 @@ class FbClient
       @@ua_token.reset
     end
 
-    private
 
     def self.request url
+      ini_token
       FbClient::Request.ua_get @@ua_token, url
     end
 
