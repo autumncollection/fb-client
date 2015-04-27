@@ -31,6 +31,10 @@ class FbClient
       Token::report_and_get_new_token token, type
     end
 
+    def fetch_no_token(url, return_error = false)
+      Fetch::fetch_without_token(url, return_error)
+    end
+
     def fetch(url, preferred = :default, return_error = false)
       Fetch::fetch(url, preferred, return_error)
     end

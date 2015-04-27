@@ -29,6 +29,22 @@ class FbClient
       :preferred_no_token => 'preferred_sleep',
     }
 
+    def self.fetch_without_token(url, return_error = false)
+      response = request "#{@@conf[:graph_api_url]}#{url}"
+
+      if response && response.include?(:error) && response.include?(:content)
+        error = recognize_error response[:content]
+        # stop fetching
+        return return_error ? error : false if
+          error.kind_of?(Hash) || error == true
+      end
+
+      if response && response.kind_of?(Hash) && response.include?('error')
+        return_error ? {:error => response['error']} : false
+      end
+      response
+    end
+
     # return nil in case of error, data otherwise
     # func - calling method used for logging
     def self.fetch(url, preferred = :default, return_error = false)
