@@ -15,8 +15,8 @@ class FbClient
     def self.get_token(type = :default)
       response = request "#{$FB_TOKENS[:url]}/get" +
         "?type=#{TOKEN_TYPES[type] || TOKEN_TYPES[:default]}"
-      return nil if !response ||
-        (response.kind_of?(Hash) && response.include?(:error))
+      return nil if !response && response.kind_of?(Hash) &&
+        response.include?(:error)
       response['token'] || response['error']
     end
 
