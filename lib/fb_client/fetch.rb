@@ -1,32 +1,35 @@
 # encoding:utf-8
 require 'fb_client/request'
+
 class FbClient
 
   module Fetch
 
     protected
 
-    LIMIT_ERROR = [
-      'An unknown error occurred',
-    ]
-    LIMIT_ERRORS = [
-      /the 'limit' parameter should not exceed/i
-    ]
-    # ua reset error - blacklisted ip
-    UA_RESET_ERROR = [5]
-    LIMIT          = 250
-    BREAK_CODES    = [100, 2500, 803, 21]
-    DISABLE_REASON = {
-      :'2500'   => 'Deleted profile',
-    }
-    MASKED_TOKEN = [190, 613, 2, 4, 17, 613]
-    DIFFERENT_ID = [21]
     FB = {
       :graph_api_url      => "https://graph.facebook.com/v2.0/",
       :sleep_no_token     => 200,
       :sleep_preferred    => 15,
       :token_attempts     => 3,
       :preferred_no_token => 'preferred_sleep',
+      :ua => {
+        :req_timeout  => 60,
+        :req_attempts => 2,
+        :retry_wait   => 5,
+        :req_norecode => true,
+        :ignore_kill  => true
+      },
+      :errors => {
+        :ua_reset => [5],
+        :break    => [100, 2500, 803, 21],
+        :masked   => [190, 613, 2, 4, 17, 613],
+        :limit    => [
+          /the '?limit'? parameter should not exceed/i,
+          /an unknown error occurred/i
+        ],
+        :different_id => [21],
+      }
     }
 
     def self.fetch_without_token(url, return_error = false)
@@ -48,7 +51,7 @@ class FbClient
     # return nil in case of error, data otherwise
     # func - calling method used for logging
     def self.fetch(url, preferred = :default, return_error = false)
-      ini_token_conf
+      ini_fetch_conf
       token, last_error, doc, attempt = nil, nil, nil, 0
       while true
         attempt += 1
@@ -95,9 +98,9 @@ class FbClient
 
     include Request
 
-    def self.ini_token_conf
+    def self.ini_fetch_conf
+      return true if defined?(@@conf)
       @@conf = FbClient::Fetch::FB
-      @@conf.merge!($FB_TOKENS || {})
       @@conf.merge!($FB || {})
     end
 
@@ -108,40 +111,35 @@ class FbClient
 
     # initialize curburger client only once
     def self.ini_fetch
-      @@ua_fetch ||= Curburger.new((defined?($FB_UA_OPTS) ? $FB_UA_OPTS[:ua] : {}).merge({
-        :ignore_kill  => true,
-        :req_norecode => true,
-      }))
+      ini_fetch_conf
+      @@ua_fetch ||= Curburger.new(@@conf[:ua])
       @@ua_fetch.reset
     end
 
     def self.recognize_error response
       begin
         # limit error - too many items in one response
-        if response['error_msg'] && LIMIT_ERROR.include?(response['error_msg'])
-          {:error => "limit_error"}
-        # 504 gateway
-        elsif response.include?('error') && response['error'].include?('code')
-          if UA_RESET_ERROR.include?(response['code'].to_i) ||
-            MASKED_TOKEN.include?(response['error']['code'].to_i)
-
+        if response.include?('error') && response['error'].include?('code')
+          if @@conf[:errors][:masked].include?(response['code'].to_i) ||
+            @@conf[:errors][:ua_reset].include?(response['error']['code'].to_i)
             false
-          elsif BREAK_CODES.include?(response['error']['code'].to_i)
+          elsif @@conf[:errors][:break].include?(response['error']['code'].to_i)
             {:error => response['error']['code']}
-          elsif DIFFERENT_ID.include?(response['error']['code'].to_i)
+          elsif @@conf[:errors][:different_id].include?(response['error']['code'].to_i)
             {
               :error  => response['error']['code'].to_i,
               :new_id => response['error']['message'] =~
                 /to page id (\d+)/i ? $1.to_i : nil
             }
-          else
-            limit_error = {:error => response['error']['message']}
-            LIMIT_ERRORS.each { |error|
-              limit[:error] = 'limit_error' if
-                response['error']['message'].match(error)
-            }
-            limit_error
           end
+        else
+          message = response['error_msg'] || response['error']['message']
+          limit_error = {:error => message}
+          @@conf[:errors][:limit].each { |error|
+            limit_error[:error] = 'limit_error' if
+              response['error']['message'].match(error)
+          }
+          limit_error
         end
       rescue => bang
         return {:error => "Facebook::Fetch: " +
