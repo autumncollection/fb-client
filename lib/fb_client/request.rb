@@ -7,6 +7,7 @@ class FbClient
     def self.ua_get ua, url
       ua.reset
       begin
+         p url
         response = ua.send(:get, url)
       rescue FetchFailedException => err
         return false

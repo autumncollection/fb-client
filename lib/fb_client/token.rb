@@ -13,8 +13,13 @@ class FbClient
     }
 
     def self.get_token(type = :default)
-      response = request "#{$FB_TOKENS[:url]}/get" +
-        "?type=#{TOKEN_TYPES[type] || TOKEN_TYPES[:default]}"
+      tail     = []
+      [type].flatten.each { |one_type|
+        tail << "type[]=#{TOKEN_TYPES[one_type]}" if
+          TOKEN_TYPES.include?(one_type)
+      }
+      tail << "type[]=#{TOKEN_TYPES[:default]}" if tail.empty?
+      response = request "#{$FB_TOKENS[:url]}/get?#{tail.join('&')}"
       return nil if !response && response.kind_of?(Hash) &&
         response.include?(:error)
       response['token'] || response['error']

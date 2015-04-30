@@ -69,8 +69,9 @@ class FbClient
           return nil
         end
 
-        response = request "#{@@conf[:graph_api_url]}#{url}" +
-          "#{url.index('?') ? '&' : '?'}access_token=#{token}"
+        response = request("#{@@conf[:graph_api_url]}/#{url}" +
+          "#{url.index('?') ? '&' : '?'}access_token=#{token}".squeeze('/')
+        )
 
         if response && response.include?(:error) && response.include?(:content)
           error = recognize_error response[:content]
