@@ -10,11 +10,12 @@ class FbClient
       :preferred     => 'preferred',
       :high_priority => 'high_priority',
       :old_api       => 'old_api',
+      :user_token    => 'user_token',
     }
 
     def self.get_token(type = :default)
       tail     = []
-      [type].flatten.each { |one_type|
+      [type].flatten.uniq.each { |one_type|
         tail << "type[]=#{TOKEN_TYPES[one_type]}" if
           TOKEN_TYPES.include?(one_type)
       }

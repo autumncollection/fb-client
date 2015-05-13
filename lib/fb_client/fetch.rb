@@ -22,7 +22,8 @@ class FbClient
       },
       :errors => {
         :ua_reset => [5],
-        :break    => [100, 2500, 803, 21],
+        :disable  => [100],
+        :break    => [2500, 803, 21],
         :masked   => [190, 613, 2, 4, 17, 613],
         :limit    => [
           /the '?limit'? parameter should not exceed/i,
@@ -124,6 +125,8 @@ class FbClient
           if @@conf[:errors][:masked].include?(response['code'].to_i) ||
             @@conf[:errors][:ua_reset].include?(response['error']['code'].to_i)
             false
+         elsif @@conf[:errors][:disable].include?(response['error']['code'].to_i)
+            {:error => response['error']['code'].to_i}
           elsif @@conf[:errors][:break].include?(response['error']['code'].to_i)
             {:error => response['error']['code']}
           elsif @@conf[:errors][:different_id].include?(response['error']['code'].to_i)

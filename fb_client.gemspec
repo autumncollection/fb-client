@@ -2,8 +2,8 @@
 
 Gem::Specification.new do |s|
   s.name        = 'fb_client'
-  s.version     = '0.3.3'
-  s.date        = '2015-04-22'
+  s.version     = '0.3.4'
+  s.date        = '2015-05-13'
   s.summary     = "FB Tokener for Rasi"
   s.description = "Post and mentions elasticsearch"
   s.authors     = ["Tomas Hrabal"]
