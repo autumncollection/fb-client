@@ -2,10 +2,10 @@
 
 Gem::Specification.new do |s|
   s.name        = 'fb_client'
-  s.version     = '0.3.4'
+  s.version     = '0.3.5'
   s.date        = '2015-05-13'
   s.summary     = "FB Tokener for Rasi"
-  s.description = "Post and mentions elasticsearch"
+  s.description = "Fetch data from FB Graph API"
   s.authors     = ["Tomas Hrabal"]
   s.email       = 'hrabal.tomas@gmail.com'
   s.files       = [

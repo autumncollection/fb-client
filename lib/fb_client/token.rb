@@ -21,8 +21,9 @@ class FbClient
       }
       tail << "type[]=#{TOKEN_TYPES[:default]}" if tail.empty?
       response = request "#{$FB_TOKENS[:url]}/get?#{tail.join('&')}"
-      return nil if !response && response.kind_of?(Hash) &&
-        response.include?(:error)
+      return nil if !response || (response.kind_of?(Hash) &&
+        response.include?(:error))
+
       response['token'] || response['error']
     end
 

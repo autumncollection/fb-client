@@ -21,13 +21,15 @@ class FbClient
         :ignore_kill  => true
       },
       :errors => {
-        :ua_reset => [5],
-        :disable  => [100],
-        :break    => [2500, 803, 21],
-        :masked   => [190, 613, 2, 4, 17, 613],
-        :limit    => [
+        :ua_reset   => [5],
+        :disable    => [100],
+        :break      => [2500, 803, 21],
+        :masked     => [190, 613, 2, 4, 17, 613],
+        :limit_code => [-3],
+        :limit      => [
           /the '?limit'? parameter should not exceed/i,
-          /an unknown error occurred/i
+          /an unknown error occurred/i,
+          /Please reduce the amount of data you're asking for, then retry your request/
         ],
         :different_id => [21],
       }
@@ -134,6 +136,10 @@ class FbClient
               :error  => response['error']['code'].to_i,
               :new_id => response['error']['message'] =~
                 /to page id (\d+)/i ? $1.to_i : nil
+            }
+          elsif @@conf[:errors][:limit_code].include?(response['error']['code'].to_i)
+            {
+              error: 'limit_error'
             }
           end
         else
