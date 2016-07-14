@@ -25,7 +25,7 @@ class FbClient
         :disable    => [100],
         :break      => [2500, 803, 21],
         :masked     => [190, 613, 2, 4, 17, 613],
-        :limit_code => [-3],
+        :limit_code => [-3, 1],
         :limit      => [
           /the '?limit'? parameter should not exceed/i,
           /an unknown error occurred/i,
