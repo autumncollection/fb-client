@@ -36,7 +36,7 @@ class FbClient
     }
 
     def self.fetch_without_token(url, return_error = false)
-      response = request "#{@@conf[:graph_api_url]}#{url}"
+      response = request("#{@@conf[:graph_api_url]}#{url}")
 
       if response && response.include?(:error) && response.include?(:content)
         error = recognize_error response[:content]
@@ -56,7 +56,7 @@ class FbClient
     def self.fetch(url, preferred = :default, return_error = false)
       ini_fetch_conf
       token, last_error, doc, attempt = nil, nil, nil, 0
-      while true
+      loop do
         attempt += 1
         break if attempt > @@conf[:token_attempts]
         token = FbClient::Token.get_token(preferred)
@@ -72,18 +72,17 @@ class FbClient
           return nil
         end
 
-        response = request("#{@@conf[:graph_api_url]}/#{url}" +
-          "#{url.index('?') ? '&' : '?'}access_token=#{token}".squeeze('/')
-        )
+        response = request("#{@@conf[:graph_api_url]}#{url}" \
+          "#{url.index('?') ? '&' : '?'}access_token=#{token}".squeeze('/'))
 
         if response && response.include?(:error) && response.include?(:content)
-          error = recognize_error response[:content]
+          error = recognize_error(response[:content])
           # stop fetching
-          if error.kind_of?(Hash) || error == true
+          if error.is_a?(Hash) || error == true
             return return_error ? error : false
           # just report token
           else
-            FbClient::Token.report_token token
+            FbClient::Token.report_token(token)
             next
           end
         end

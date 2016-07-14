@@ -7,12 +7,12 @@ class FbClient
       begin
         response = ua.send(:get, url)
       rescue FetchFailedException => err
-        return false
+        return false unless response
       end
 
       begin
-        content = Oj.load response[:content]
-        return {:error => response[:error], :content => content} if
+        content = Oj.load(response[:content])
+        return { error: response[:error], content: content } if
           response.include?(:error)
         content
       rescue SyntaxError, Oj::ParseError => e
