@@ -1,13 +1,10 @@
 # encoding:utf-8
 
 class FbClient
-
   module Request
-
-    def self.ua_get ua, url
+    def self.ua_get(ua, url)
       ua.reset
       begin
-         p url
         response = ua.send(:get, url)
       rescue FetchFailedException => err
         return false
@@ -22,7 +19,5 @@ class FbClient
         return nil
       end
     end
-
   end
-
 end
